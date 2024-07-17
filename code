@@ -1,0 +1,140 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Constants
+#define MAX_CUSTOMERS 100
+#define MAX_COMMENTS 200
+
+// Structures
+struct Feedback {
+    int rating;
+    char comments[MAX_COMMENTS];
+};
+
+struct Customer {
+    char name[50];
+    int numFeedbacks;
+    struct Feedback *feedback;  // Dynamic array for feedback entries
+};
+
+// Function prototypes
+void printMenu();
+void initializeCustomers(struct Customer customers[], int numCustomers);
+void processFeedback(struct Customer customers[], int numCustomers);
+void printCustomerFeedback(struct Customer customers[], int numCustomers);
+void freeMemory(struct Customer customers[], int numCustomers);
+
+int main() {
+    int numCustomers;
+    printf("Enter the number of customers: ");
+    scanf("%d", &numCustomers);
+
+    if (numCustomers <= 0 || numCustomers > MAX_CUSTOMERS) {
+        printf("Invalid number of customers.\n");
+        return 1;
+    }
+
+    struct Customer customers[MAX_CUSTOMERS];
+    initializeCustomers(customers, numCustomers);
+
+    while (1) {
+        printMenu();
+
+        int choice;
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                processFeedback(customers, numCustomers);
+                break;
+            case 2:
+                printCustomerFeedback(customers, numCustomers);
+                break;
+            case 3:
+                freeMemory(customers, numCustomers);
+                printf("Exiting program.\n");
+                return 0;
+            default:
+                printf("Invalid choice. Please enter again.\n");
+                break;
+        }
+    }
+
+    return 0;
+}
+
+void printMenu() {
+    printf("\n===== Customer Feedback System =====\n");
+    printf("1. Provide Feedback\n");
+    printf("2. View Customer Feedback\n");
+    printf("3. Exit\n");
+}
+
+void initializeCustomers(struct Customer customers[], int numCustomers) {
+    // Initialize customers (for demonstration purposes)
+    for (int i = 0; i < numCustomers; ++i) {
+        printf("Enter customer %d's name: ", i + 1);
+        scanf("%s", customers[i].name);
+        customers[i].numFeedbacks = 0;
+        customers[i].feedback = NULL;  // Initialize feedback pointer to NULL
+    }
+}
+
+void processFeedback(struct Customer customers[], int numCustomers) {
+    int customerId;
+    printf("Enter your customer number (1-%d): ", numCustomers);
+    scanf("%d", &customerId);
+    customerId--;  // Convert to zero-indexed
+
+    if (customerId < 0 || customerId >= numCustomers) {
+        printf("Invalid customer number.\n");
+        return;
+    }
+
+    // Increment number of feedbacks
+    customers[customerId].numFeedbacks++;
+
+    // Allocate memory for feedback entries
+    struct Feedback *newFeedback = (struct Feedback *)realloc(customers[customerId].feedback, customers[customerId].numFeedbacks * sizeof(struct Feedback));
+    if (newFeedback == NULL) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    customers[customerId].feedback = newFeedback;
+
+    // Input new feedback
+    printf("Hello %s! Please provide your feedback.\n", customers[customerId].name);
+    printf("Rate us (1-5): ");
+    scanf("%d", &customers[customerId].feedback[customers[customerId].numFeedbacks - 1].rating);
+
+    printf("Enter your comments (max %d characters): ", MAX_COMMENTS - 1);
+    getchar();  // Clear newline character from buffer
+    fgets(customers[customerId].feedback[customers[customerId].numFeedbacks - 1].comments, MAX_COMMENTS, stdin);
+
+    printf("Thank you for your feedback!\n");
+}
+
+void printCustomerFeedback(struct Customer customers[], int numCustomers) {
+    for (int i = 0; i < numCustomers; ++i) {
+        printf("Customer %d: %s\n", i + 1, customers[i].name);
+
+        if (customers[i].numFeedbacks == 0) {
+            printf("   No feedback given yet.\n");
+        } else {
+            printf("   Feedback:\n");
+            for (int j = 0; j < customers[i].numFeedbacks; ++j) {
+                printf("   - Rating: %d\n", customers[i].feedback[j].rating);
+                printf("     Comments: %s\n", customers[i].feedback[j].comments);
+            }
+        }
+    }
+}
+
+void freeMemory(struct Customer customers[], int numCustomers) {
+    for (int i = 0; i < numCustomers; ++i) {
+        free(customers[i].feedback);  // Free allocated feedback array
+    }
+}
